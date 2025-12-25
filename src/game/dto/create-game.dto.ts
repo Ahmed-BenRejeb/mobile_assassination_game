@@ -1,9 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, MinLength } from 'class-validator';
+import { IsNull } from 'typeorm';
 
 export class CreateGameDto {
-  @ApiProperty({ example: 'INSAT Killer Game' })
+
+  @ApiProperty({ example: '123456' })
   @IsString()
-  @MinLength(3)
-  name: string;
+  code: string;
+
+
+  
+  
+
+
+  
 }

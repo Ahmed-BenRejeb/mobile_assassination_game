@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, Unique } from 'typeorm';
 
 export enum GameStatus {
   WAITING = 'WAITING',
@@ -10,10 +10,6 @@ export enum GameStatus {
 export class Game {
   @PrimaryGeneratedColumn()
   id: number;
-
-  @Column()
-  name: string;
-
   @Column({
     type: 'enum',
     enum: GameStatus,
@@ -22,8 +18,13 @@ export class Game {
   status: GameStatus;
 
   @Column()
+  @Unique(['code'])
   code: string;
   
   @CreateDateColumn()
   createdAt: Date;
+  @Column({ type: 'timestamp', nullable: true })
+  startedAt: Date;
+  @Column({ type: 'timestamp', nullable: true })
+  finishedAt: Date;
 }
