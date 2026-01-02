@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Player } from './player.entity';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Game, GameStatus } from 'src/game/game.entity';
+import { DataSource } from 'typeorm';
 
 
 @Injectable()
@@ -12,6 +13,7 @@ export class PlayerService {
     private playerRepository: Repository<Player>,
     @InjectRepository(Game)
     private gameRepository: Repository<Game>,
+    private dataSource: DataSource,
   ) {}
 
   async getPlayers(gameId: number): Promise<Player[]> {
@@ -22,6 +24,7 @@ export class PlayerService {
     return this.playerRepository.find({
     where: {game: {id:gameId}},
     relations: ['game', 'currentTarget'],
+    select: ['id', 'nickname', 'kills', 'isAlive', 'secretCode'], // Arja3 fasakh l secret code mba3d 
   });
   }
 
@@ -95,18 +98,31 @@ async assignInitialTargets(gameId: number) {
 
   await this.playerRepository.save(shuffled);
 }
+
+
+
 async killTarget(killerId: number, targetCode: string) {
-  const killer = await this.playerRepository.findOne({
+
+  const queryRunner = this.dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+  try {
+    const manager = queryRunner.manager;
+    const killer = await manager.findOne(Player, {
     where: { id: killerId },
     relations: ['game', 'currentTarget', 'currentTarget.currentTarget'],
   });
 
-  if (!killer) throw new NotFoundException('Player not found');
-  if (!killer.game) throw new BadRequestException('Player is not in a game');
-  const target = await this.playerRepository.findOne({
-    where: { secretCode: targetCode, game: { id: killer.game.id } },
-    relations: ['currentTarget'],
-  });
+
+     if (!killer) throw new NotFoundException('Player not found');
+      if (!killer.game) throw new BadRequestException('Player is not in a game');
+      if (!killer.isAlive) throw new BadRequestException('You are dead and cannot kill targets');
+
+  const target = await manager.findOne(Player, {
+      where: { secretCode: targetCode, game: { id: killer.game.id } },
+      relations: ['currentTarget'],
+    });
+
 
   if (!target || !target.isAlive)
     throw new BadRequestException('Invalid target');
@@ -126,54 +142,87 @@ async killTarget(killerId: number, targetCode: string) {
   target.isAlive = false;
   target.currentTarget = null;
 
-  await this.playerRepository.save([killer, target]);
+  await manager.save([killer, target]);
 
   // Update other affected players
-  await this.reassignTargetsForDead(target.id);
-  const alivePlayers = await this.playerRepository.count({
-  where: { game: { id: killer.game.id }, isAlive: true },
+  await this.reassignTargetsForDead(target.id,killer.game.id,manager);
+  const alivePlayers = await manager.count(Player,{
+where: { game: { id: killer.game.id }, isAlive: true },
 });
 
   if (alivePlayers === 1) {
-  const game = killer.game;
+  const game = killer.game; 
   game.status = GameStatus.FINISHED;
   game.finishedAt = new Date();
   game.winner = killer;
-  await this.gameRepository.save(game);
+  await manager.save(game);
 
   return {
     message: 'Game finished',
     winner: killer,
   };
 }
+
+
+    await queryRunner.commitTransaction();
+    
   return { message: 'Target eliminated', killer, target };
-}
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    throw error;
+  } finally {
+    await queryRunner.release();
+  }
+ }
 
 
-async reassignTargetsForDead(deadPlayerId: number) {
-  const affectedPlayers = await this.playerRepository.find({
-    where: { currentTarget: { id: deadPlayerId }, isAlive: true },
-    relations: ['currentTarget', 'currentTarget.currentTarget'],
+async reassignTargetsForDead(deadPlayerId: number,gameId:number,manager?: EntityManager) {
+  const repo = manager ? manager.getRepository(Player) : this.playerRepository;
+  const allPlayers = await repo.find({
+    where: { game: { id: gameId } },
+    relations: ['currentTarget'] // Load 1 level deep is enough if you have the whole list
   });
 
-  for (const player of affectedPlayers) {
-    if (!player.currentTarget) continue;
-    let newTarget = player.currentTarget.currentTarget;
-    let visited = new Set<number>([player.id, deadPlayerId]);
-    // Skip dead targets recursively
-    while (newTarget && !newTarget.isAlive || newTarget?.secretCode===player.secretCode) {
-        if (visited.has(newTarget.id)) {
-        newTarget = null; // Cycle detected
+  const playerMap = new Map<number, Player>();
+  allPlayers.forEach(p => playerMap.set(p.id, p));
+
+  const hunter = allPlayers.find(p => p.currentTarget?.id === deadPlayerId);
+
+  if (hunter) {
+
+    let nextCandidateId = playerMap.get(deadPlayerId)?.currentTarget?.id;
+    let visited = new Set<number>([hunter.id, deadPlayerId]);
+
+
+    while (nextCandidateId) {
+      const candidate = playerMap.get(nextCandidateId);
+
+      if (!candidate) {
+        hunter.currentTarget = null;
         break;
       }
-      visited.add(newTarget.id);
-        newTarget = newTarget.currentTarget;
+
+      if (candidate.isAlive && candidate.id !== hunter.id) {
+        hunter.currentTarget = candidate;
+        break;
+      }
+
+
+      if (visited.has(candidate.id)) {
+        hunter.currentTarget = null; // Everyone else is dead
+        break;
+      }
+      visited.add(candidate.id);
+
+      nextCandidateId = candidate.currentTarget?.id;
     }
 
-    player.currentTarget = newTarget || null;
-  }
+    if (!nextCandidateId) {
+        hunter.currentTarget = null;
+    }
 
-  await this.playerRepository.save(affectedPlayers);
+    await repo.save(hunter);
+  }
 }
 async createStandalonePlayer(nickname: string) {
     const player = this.playerRepository.create({
@@ -204,6 +253,7 @@ async createStandalonePlayer(nickname: string) {
   async getAllPlayers(): Promise<Player[]> {
     return this.playerRepository.find({
     relations: ['game', 'currentTarget'],
+    select: ['id', 'nickname', 'kills', 'isAlive', 'secretCode'], // Arja3 fasakh l secret code mba3d
   });
   }
 
@@ -214,7 +264,7 @@ async createStandalonePlayer(nickname: string) {
     }
     return this.playerRepository.find({
     where: { game: { id: gameId }, isAlive: true },
-    relations: ['game', 'currentTarget'],
+    select: ['id', 'nickname', 'kills', 'isAlive'], 
   });
   }
 
@@ -226,6 +276,7 @@ async createStandalonePlayer(nickname: string) {
     return this.playerRepository.find({
     where: { game: { id: gameId } },
     order: { kills: 'DESC' },
+    select: ['id', 'nickname', 'kills'], 
   });
   }
   async joinStandaloneGame(playerId: number, gameId: number) {
