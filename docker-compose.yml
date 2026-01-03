@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-
   database:
     image: mysql:8.0
     restart: always
@@ -14,18 +13,46 @@ services:
       - '3307:3306'
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - game-network
 
-  # 2. Redis (The Cache)
   redis:
     image: redis:7-alpine
     restart: always
     ports:
       - '6379:6379'
     command: redis-server --save 60 1 --loglevel warning
-    # --save 60 1 means: save to disk if 1 key changes in 60 seconds (Persistence)
     volumes:
       - redis_data:/data
+    networks:
+      - game-network
+
+  backend:
+    build: .
+    restart: always
+    environment:
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      PORT: 3000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SWAGGER_USER: ${SWAGGER_USER:-admin}
+      SWAGGER_PASSWORD: ${SWAGGER_PASSWORD:-admin123}
+    ports:
+      - '3001:3000'
+    depends_on:
+      - database
+      - redis
+    networks:
+      - game-network
 
 volumes:
   db_data:
   redis_data:
+
+networks:
+  game-network:
+    driver: bridge

@@ -18,10 +18,22 @@ private playerRepository: Repository<Player>,
 
   ) {}
 
-  async createGame() {
+  async createGame(playerId: number): Promise<Game> {
+
     const game = this.gameRepository.create({
       code: this.generateGameCode(),
     });
+    const player = await this.playerRepository.findOne({ where: { id: playerId } });
+    if (!player) {
+      throw new NotFoundException('Player not found');
+    }
+    if (player.game) {
+      throw new BadRequestException('Player is already in a game');
+    }
+
+    player.isCreator = true;
+    player.game = game;
+    await this.playerRepository.save(player); 
     return this.gameRepository.save(game);
   }
 
@@ -54,7 +66,7 @@ private playerRepository: Repository<Player>,
     
   } 
 
-    async startGame(id: number) {
+    async startGame(id: number,playerId: number) {
   const game = await this.getGameOrFail(id);
 
   if (game.status !== GameStatus.WAITING) {
@@ -68,6 +80,9 @@ private playerRepository: Repository<Player>,
       where: { game: { id: game.id }, isAlive: true },
     });
     if (players.length < 4) throw new BadRequestException('Not enough players');
+    if (!players.find(p => p.id === playerId && p.isCreator)) {
+        throw new BadRequestException('Only the game creator can start the game');
+    }
     
     const shuffled = players.sort(() => Math.random() - 0.5);
     for (let i = 0; i < shuffled.length; i++) {
@@ -77,7 +92,8 @@ private playerRepository: Repository<Player>,
      game.status = GameStatus.RUNNING;
     game.startedAt = new Date();
     await this.gameRepository.save(game);
-     this.gameGateway.notifyGameStarted(id, game);
+    this.gameGateway.notifyGameStarted(id, game);
+
 
     return game;
   }

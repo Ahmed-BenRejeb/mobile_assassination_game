@@ -9,10 +9,11 @@ import { ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 export class GameController {
   constructor(private readonly gameService: GameService) {}
 
-  @Post()
+  @Post(":playerId")
   @ApiOperation({ summary: 'Create a new game' })
-  createGame() {
-    return this.gameService.createGame();
+  
+  createGame(@Param('playerId', ParseIntPipe) playerId: number) {
+    return this.gameService.createGame(playerId);
   }
 
   @Get()
@@ -27,8 +28,8 @@ export class GameController {
   }
 @Post(':id/start')
 @ApiOperation({ summary: 'Start a game' })
-startGame(@Param('id', ParseIntPipe) id: number) {
-  return this.gameService.startGame(id);
+startGame(@Param('id', ParseIntPipe) id: number,@Param('playerId', ParseIntPipe) playerId: number) {
+  return this.gameService.startGame(id, playerId);
 }
 
 @Post(':id/finish')

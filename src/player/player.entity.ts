@@ -38,6 +38,8 @@ currentTarget: Player | null;
   
   @Column({ default: 0 })
   kills: number;
+  @Column({ type: 'boolean', default: false, nullable: true })
+  isCreator: boolean | null;
 
 
   
