@@ -18,18 +18,8 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
-          env:
-            - name: DB_HOST
-              value: mysql
-            - name: DB_PORT
-              value: "3306"
-            - name: DB_USERNAME
-              value: user
-            - name: DB_PASSWORD
-              value: password
-            - name: DB_DATABASE
-              value: game
-            - name: REDIS_HOST
-              value: redis
-            - name: REDIS_PORT
-              value: "6379"
+          envFrom:
+            - configMapRef:
+                name: game-config
+            - secretRef:
+                name: game-secrets
