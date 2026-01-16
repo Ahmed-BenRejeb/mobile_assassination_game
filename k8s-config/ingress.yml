@@ -3,10 +3,17 @@ kind: Ingress
 metadata:
   name: game-ingress
   annotations:
-
     nginx.ingress.kubernetes.io/rewrite-target: /
+    #  Force SSL redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
+
+  tls:
+  - hosts:
+      - killer-game.local
+    secretName: game-tls-secret
+
   rules:
   - host: killer-game.local 
     http:
@@ -14,8 +21,7 @@ spec:
       - path: /
         pathType: Prefix
         backend:
-        
           service:
             name: backend    
             port:
-              number: 3000   
+              number: 3000
