@@ -14,8 +14,13 @@ spec:
     spec:
       containers:
         - name: backend
+<<<<<<< HEAD:charts/social-game/templates/deployment.yaml
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+=======
+          image: ahmedbenrejeb0/backend:a90d0b2ffb7761467358c2b24e11e8299dfedb44
+          imagePullPolicy: IfNotPresent
+>>>>>>> 78d9f5f86d3a45477768c6b64a19e5876324e1ed:deployement/backend.yml
           ports:
             - containerPort: 3000
           envFrom:
