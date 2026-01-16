@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" ]
     paths-ignore:
-      - 'deployement/**'
+      - 'charts/**'  
 
 jobs:
   build:
@@ -28,14 +28,15 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/backend:latest
             ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
 
-      - name: Update Kubernetes Manifest
+      - name: Update Helm Values
         run: |
           git config user.name "GitHub Actions Robot"
           git config user.email "actions@github.com"
 
-          # CHANGED: The 'sed' command now looks for "backend" instead of "social-backend"
-          sed -i "s|image: .*${{ secrets.DOCKER_USERNAME }}/backend:.*|image: ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}|g" deployement/backend.yml
+  
+          sed -i "s|tag: .*|tag: ${{ github.sha }}|g" charts/social-game/values.yaml
 
-          git add deployement/backend.yml
+
+          git add charts/social-game/values.yaml
           git commit -m "Update image tag to ${{ github.sha }}"
           git push

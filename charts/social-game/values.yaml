@@ -1,0 +1,16 @@
+# charts/social-game/values.yaml
+
+replicaCount: 1
+
+image:
+  repository: ahmedbenrejeb0/backend
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: true
+  host: killer-game.local

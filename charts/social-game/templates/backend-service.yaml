@@ -7,6 +7,6 @@ spec:
   selector:
     app: backend
   ports:
-    - port: 3000       # port inside the cluster
+    - port: {{ .Values.service.port }}       # port inside the cluster
       targetPort: 3000 # port your container listens on
       nodePort: 30002  # port on minikube host

@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: backend
 spec:
-  replicas: 3
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app: backend
@@ -14,8 +14,8 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ahmedbenrejeb0/backend:83656dd6c50249a59d8c9d13c42db186fc946ded
-          imagePullPolicy: IfNotPresent
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: 3000
           envFrom:
