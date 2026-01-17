@@ -4,7 +4,7 @@ replicaCount: 1
 
 image:
   repository: ahmedbenrejeb0/backend
-  tag: 28c7d20ee9ddf8485cf23048ca1eabd13ac67df1
+  tag: 31045d5a53eb360dd19cee12e5fbb39ea0524750
   pullPolicy: Always
 
 service:
