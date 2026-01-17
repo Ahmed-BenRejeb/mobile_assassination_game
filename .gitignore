@@ -61,3 +61,5 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 /k8s-config/tls.*
 **/templates/secret.yaml
 **/templates/tls-secret.yaml
+/charts/social-game/templates/secret.yaml
+/charts/social-game/templates/tls-secret.yaml
