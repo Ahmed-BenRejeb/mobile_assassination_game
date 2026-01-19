@@ -30,22 +30,22 @@ kube-prometheus-stack:
         smtp_auth_password_file: '/etc/alertmanager/secrets/alertmanager-smtp-password/password'
         smtp_require_tls: true
 
-      route:
-        group_by: ['alertname']
-        group_wait: 30s
-        group_interval: 5m
-        repeat_interval: 1h
-        receiver: 'email-receiver'
-        routes:
-        - match:
-            alertname: BackendMaxReplicasReached
-          receiver: 'email-receiver'
+      # route:
+      #   group_by: ['alertname']
+      #   group_wait: 30s
+      #   group_interval: 5m
+      #   repeat_interval: 1h
+      #   receiver: 'email-receiver'
+      #   routes:
+      #   - match:
+      #       alertname: BackendMaxReplicasReached
+      #     receiver: 'email-receiver'
 
-      receivers:
-      - name: 'email-receiver'
-        email_configs:
-        - to: 'ahmed.benrejeb@insat.ucar.tn'
-          send_resolved: true
+      # receivers:
+      # - name: 'email-receiver'
+      #   email_configs:
+      #   - to: 'ahmed.benrejeb@insat.ucar.tn'
+      #     send_resolved: true
 
 loki-stack:
   loki:
