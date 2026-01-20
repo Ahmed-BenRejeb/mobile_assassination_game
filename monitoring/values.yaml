@@ -13,39 +13,39 @@ kube-prometheus-stack:
     prometheusSpec:
       serviceMonitorSelectorNilUsesHelmValues: false
       podMonitorSelectorNilUsesHelmValues: false
-  alertmanager:
-    enabled: false
-    # We must mount the secret into the Alertmanager pod so it can read it
-    alertmanagerSpec:
-      secrets:
-        - alertmanager-smtp-password
+  # alertmanager:
+  #   enabled: false
+  #   # We must mount the secret into the Alertmanager pod so it can read it
+  #   alertmanagerSpec:
+  #     secrets:
+  #       - alertmanager-smtp-password
 
-    config:
-      global:
-        resolve_timeout: 5m
-        smtp_smarthost: 'smtp.gmail.com:587'
-        smtp_from: 'your-email@gmail.com'
-        smtp_auth_username: 'benrejebahmed00@gmail.com'
-        # Tell Alertmanager to read the password from the file we mounted
-        smtp_auth_password_file: '/etc/alertmanager/secrets/alertmanager-smtp-password/password'
-        smtp_require_tls: true
+  #   config:
+  #     global:
+  #       resolve_timeout: 5m
+  #       smtp_smarthost: 'smtp.gmail.com:587'
+  #       smtp_from: 'your-email@gmail.com'
+  #       smtp_auth_username: 'benrejebahmed00@gmail.com'
+  #       # Tell Alertmanager to read the password from the file we mounted
+  #       smtp_auth_password_file: '/etc/alertmanager/secrets/alertmanager-smtp-password/password'
+  #       smtp_require_tls: true
 
-      # route:
-      #   group_by: ['alertname']
-      #   group_wait: 30s
-      #   group_interval: 5m
-      #   repeat_interval: 1h
-      #   receiver: 'email-receiver'
-      #   routes:
-      #   - match:
-      #       alertname: BackendMaxReplicasReached
-      #     receiver: 'email-receiver'
+  #     # route:
+  #     #   group_by: ['alertname']
+  #     #   group_wait: 30s
+  #     #   group_interval: 5m
+  #     #   repeat_interval: 1h
+  #     #   receiver: 'email-receiver'
+  #     #   routes:
+  #     #   - match:
+  #     #       alertname: BackendMaxReplicasReached
+  #     #     receiver: 'email-receiver'
 
-      # receivers:
-      # - name: 'email-receiver'
-      #   email_configs:
-      #   - to: 'ahmed.benrejeb@insat.ucar.tn'
-      #     send_resolved: true
+  #     # receivers:
+  #     # - name: 'email-receiver'
+  #     #   email_configs:
+  #     #   - to: 'ahmed.benrejeb@insat.ucar.tn'
+  #     #     send_resolved: true
 
 loki-stack:
   loki:
