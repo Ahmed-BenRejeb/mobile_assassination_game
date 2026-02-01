@@ -23,7 +23,7 @@ export default function () {
   };
 
   // 2. Hit the POST endpoint
-  const res = http.post('http://192.168.49.2:30002/players', payload, params);
+  const res = http.post('http://10.109.94.57/players', payload, params);
 
   // 3. Check if it worked (Status 201 Created)
   check(res, {
