@@ -51,6 +51,11 @@ spec:
             successThreshold: 1      # If it says "OK" once, open the gates!
             failureThreshold: 5      # If it fails 3 times, close the gates.
             timeoutSeconds: 5
+          
+          lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 10"]
 
               
           
