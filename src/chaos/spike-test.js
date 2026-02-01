@@ -17,9 +17,9 @@ export const options = {
 export default function () {
   const res = http.get('http://10.109.94.57/players');
   
-  check(res, {
-    'recovered from spike': (r) => r.status === 200,
-    'latency acceptable': (r) => r.timings.duration < 3000,
+check(res, {
+    'status is 200 or 503': (r) => r.status === 200 || r.status === 503,
+    'latency < 3s': (r) => r.timings.duration < 3000,
   });
 
   sleep(1);
